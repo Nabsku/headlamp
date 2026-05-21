@@ -237,6 +237,14 @@ func cacheMiddlewareHandler(c *HeadlampConfig, next http.Handler, w http.Respons
 		return
 	}
 
+	// The cache is keyed by Kubernetes resource data (API group, kind, namespace).
+	// Non-resource apiserver endpoints such as /healthz and /version should still
+	// be proxied, but they cannot produce a valid resource cache key.
+	if !k8cache.IsKubernetesResourceAPIPath(r.URL.Path) || !k8cache.IsAuthBypassURL(r.URL.Path) {
+		next.ServeHTTP(w, r)
+		return
+	}
+
 	ctx, span, contextKey, kContext, err := GetContextKeyAndKContext(w, r, c)
 	if err != nil {
 		return
