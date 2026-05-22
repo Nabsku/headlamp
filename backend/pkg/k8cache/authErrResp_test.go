@@ -31,10 +31,32 @@ func TestIsAuthBypassUR(t *testing.T) {
 		expected bool
 	}{
 		{"No restricted paths", "/api/v1/resource", true},
-		{"Contains /version", "/version", false},
-		{"Contains /healthz", "/healthz", false},
-		{"Contains /selfsubjectrulesreviews", "/apis/selfsubjectrulesreviews", false},
-		{"Contains /selfsubjectaccessreviews", "/apis/selfsubjectaccessreviews", false},
+		{"Top-level /version endpoint", "/version", false},
+		{"Cluster /version endpoint", "/clusters/test/version", false},
+		{"Resource named version", "/clusters/test/api/v1/namespaces/default/configmaps/version", true},
+		{"Top-level /healthz endpoint", "/healthz", false},
+		{"Cluster /healthz endpoint", "/clusters/test/healthz", false},
+		{"Resource named healthz", "/api/v1/namespaces/default/configmaps/healthz", true},
+		{
+			"SelfSubjectAccessReview endpoint",
+			"/apis/authorization.k8s.io/v1/selfsubjectaccessreviews",
+			false,
+		},
+		{
+			"SelfSubjectRulesReview endpoint",
+			"/clusters/test/apis/authorization.k8s.io/v1/selfsubjectrulesreviews",
+			false,
+		},
+		{
+			"SelfSubjectReview endpoint",
+			"/clusters/test/apis/authentication.k8s.io/v1/selfsubjectreviews",
+			false,
+		},
+		{
+			"Resource named selfsubjectaccessreviews",
+			"/clusters/test/api/v1/namespaces/default/configmaps/selfsubjectaccessreviews",
+			true,
+		},
 	}
 
 	for _, tt := range tests {

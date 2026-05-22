@@ -31,12 +31,48 @@ type AuthErrResponse struct {
 }
 
 // IsAuthBypassURL returns true if the given URL path should be checked for authorization errors,
-// excluding known public or health-check endpoints.
+// excluding known public, health-check, and self-subject review endpoints.
 func IsAuthBypassURL(urlPath string) bool {
-	return !strings.Contains(urlPath, "/version") &&
-		!strings.Contains(urlPath, "/healthz") &&
-		!strings.Contains(urlPath, "/selfsubjectrulesreviews") &&
-		!strings.Contains(urlPath, "/selfsubjectaccessreviews")
+	parts := clusterRelativePathSegments(urlPath)
+	if len(parts) == 0 {
+		return true
+	}
+
+	switch parts[0] {
+	case "version", "healthz":
+		return false
+	}
+
+	return !isSelfSubjectReviewResource(parts)
+}
+
+func clusterRelativePathSegments(urlPath string) []string {
+	path := strings.Trim(urlPath, "/")
+	if path == "" {
+		return nil
+	}
+
+	parts := strings.Split(path, "/")
+	if len(parts) >= 3 && parts[0] == "clusters" {
+		return parts[2:]
+	}
+
+	return parts
+}
+
+func isSelfSubjectReviewResource(parts []string) bool {
+	if len(parts) < 4 || parts[0] != apisPathSegment {
+		return false
+	}
+
+	switch parts[1] {
+	case "authorization.k8s.io":
+		return parts[3] == "selfsubjectaccessreviews" || parts[3] == "selfsubjectrulesreviews"
+	case "authentication.k8s.io":
+		return parts[3] == "selfsubjectreviews"
+	default:
+		return false
+	}
 }
 
 // ReturnAuthErrorResponse return the AuthErrorResponse if the user is not Authorized

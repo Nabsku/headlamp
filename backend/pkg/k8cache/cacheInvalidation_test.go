@@ -563,7 +563,7 @@ func TestHandleNonGETCacheInvalidation_GETSkipped(t *testing.T) {
 }
 
 // TestHandleNonGETCacheInvalidation_BypassURLExcluded verifies that a POST
-// on a URL containing "/selfsubjectrulesreviews" is NOT invalidated because
+// to a SelfSubjectRulesReview endpoint is NOT invalidated because
 // IsAuthBypassURL returns false for those paths — the function returns nil.
 func TestHandleNonGETCacheInvalidation_BypassURLExcluded(t *testing.T) {
 	mockCache := NewMockCache()
@@ -575,7 +575,7 @@ func TestHandleNonGETCacheInvalidation_BypassURLExcluded(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	targetURL := &url.URL{Path: "/clusters/kind/api/v1/selfsubjectrulesreviews"}
+	targetURL := &url.URL{Path: "/clusters/kind/apis/authorization.k8s.io/v1/selfsubjectrulesreviews"}
 	r := httptest.NewRequestWithContext(
 		context.Background(), http.MethodPost, targetURL.String(), nil,
 	)
